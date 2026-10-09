@@ -29,7 +29,22 @@
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('orders.allOrders') }} ({{ orders.length }})</h3>
+          <div class="tabs">
+            <button
+              class="tab-button"
+              :class="{ active: activeTab === 'all' }"
+              @click="activeTab = 'all'"
+            >
+              {{ t('orders.allOrders') }} ({{ orders.length }})
+            </button>
+            <button
+              class="tab-button"
+              :class="{ active: activeTab === 'submitted' }"
+              @click="activeTab = 'submitted'"
+            >
+              {{ t('orders.submittedOrders') }} ({{ submittedOrders.length }})
+            </button>
+          </div>
         </div>
         <div class="table-container">
           <table class="orders-table">
@@ -41,11 +56,12 @@
                 <th class="col-status">{{ t('orders.table.status') }}</th>
                 <th class="col-date">{{ t('orders.table.orderDate') }}</th>
                 <th class="col-date">{{ t('orders.table.expectedDelivery') }}</th>
+                <th v-if="activeTab === 'submitted'" class="col-lead-time">{{ t('orders.table.leadTime') }}</th>
                 <th class="col-value">{{ t('orders.table.totalValue') }}</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id">
+              <tr v-for="order in displayedOrders" :key="order.id">
                 <td class="col-order-number"><strong>{{ order.order_number }}</strong></td>
                 <td class="col-customer">{{ translateCustomerName(order.customer) }}</td>
                 <td class="col-items">
@@ -68,6 +84,7 @@
                 </td>
                 <td class="col-date">{{ formatDate(order.order_date) }}</td>
                 <td class="col-date">{{ formatDate(order.expected_delivery) }}</td>
+                <td v-if="activeTab === 'submitted'" class="col-lead-time"><strong>{{ calculateLeadTime(order) }} days</strong></td>
                 <td class="col-value"><strong>{{ currencySymbol }}{{ order.total_value.toLocaleString() }}</strong></td>
               </tr>
             </tbody>
@@ -83,11 +100,13 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { api } from '../api'
 import { useFilters } from '../composables/useFilters'
 import { useI18n } from '../composables/useI18n'
+import { useRestockingOrders } from '../composables/useRestockingOrders'
 
 export default {
   name: 'Orders',
   setup() {
     const { t, currentCurrency, translateProductName, translateCustomerName } = useI18n()
+    const { submittedOrders } = useRestockingOrders()
 
     const currencySymbol = computed(() => {
       return currentCurrency.value === 'JPY' ? '¥' : '$'
@@ -95,6 +114,7 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const orders = ref([])
+    const activeTab = ref('all')
 
     // Use shared filters
     const {
@@ -104,6 +124,10 @@ export default {
       selectedStatus,
       getCurrentFilters
     } = useFilters()
+
+    const displayedOrders = computed(() => {
+      return activeTab.value === 'all' ? orders.value : submittedOrders.value
+    })
 
     const loadOrders = async () => {
       try {
@@ -130,7 +154,16 @@ export default {
     })
 
     const getOrdersByStatus = (status) => {
-      return orders.value.filter(order => order.status === status)
+      return displayedOrders.value.filter(order => order.status === status)
+    }
+
+    const calculateLeadTime = (order) => {
+      const orderDate = new Date(order.order_date)
+      const deliveryDate = new Date(order.expected_delivery)
+      if (isNaN(orderDate.getTime()) || isNaN(deliveryDate.getTime())) {
+        return '-'
+      }
+      return Math.ceil((deliveryDate - orderDate) / (1000 * 60 * 60 * 24))
     }
 
     const getOrderStatusClass = (status) => {
@@ -160,9 +193,13 @@ export default {
       loading,
       error,
       orders,
+      submittedOrders,
+      activeTab,
+      displayedOrders,
       getOrdersByStatus,
       getOrderStatusClass,
       formatDate,
+      calculateLeadTime,
       currencySymbol,
       translateProductName,
       translateCustomerName
@@ -201,6 +238,10 @@ export default {
 
 .col-value {
   width: 120px;
+}
+
+.col-lead-time {
+  width: 110px;
 }
 
 /* Items details styling */
@@ -275,5 +316,32 @@ export default {
 .item-meta {
   font-size: 0.813rem;
   color: #64748b;
+}
+
+/* Tab navigation */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.938rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  color: #3b82f6;
+}
+
+.tab-button.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
 }
 </style>
