@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory Inventory Management - System Architecture</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  /* Layout: Technical documentation with clear sections and visual data flow */
+
+  /* Colors - slate base with teal technical accent */
+  --background: #fafafa;
+  --surface: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --border: #e2e8f0;
+  --accent: #0891b2;
+  --accent-light: #ecfeff;
+  --code-bg: #f1f5f9;
+  --vue-green: #42b883;
+  --python-blue: #3776ab;
+
+  /* Type */
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* Spacing */
+  --gutter: 24px;
+
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+           env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0f172a;
+    --surface: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #64748b;
+    --border: #334155;
+    --accent: #06b6d4;
+    --accent-light: #164e63;
+    --code-bg: #334155;
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: #0f172a;
+  --surface: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #64748b;
+  --border: #334155;
+  --accent: #06b6d4;
+  --accent-light: #164e63;
+  --code-bg: #334155;
+
+  color-scheme: dark;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--background);
+  padding: 0 var(--gutter);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 0 80px;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 20px;
+  margin: 48px 0 20px;
+  color: var(--text-primary);
+}
+
+h3 {
+  font-size: 16px;
+  margin: 24px 0 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.subtitle {
+  font-size: 17px;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.section {
+  margin-bottom: 56px;
+}
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.tech-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.tech-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.tech-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.tech-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.tech-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tech-item {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tech-item::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.flow-diagram {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 32px;
+  margin: 24px 0;
+  overflow-x: auto;
+}
+
+.flow-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 600px;
+}
+
+.flow-box {
+  flex: 1;
+  background: var(--code-bg);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  text-align: center;
+  min-width: 140px;
+}
+
+.flow-box-title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.flow-box-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.flow-arrow {
+  color: var(--accent);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.endpoint-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.endpoint-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.endpoint-item:last-child {
+  border-bottom: none;
+}
+
+.endpoint-path {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.endpoint-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.endpoint-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.endpoint-filters {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.data-file {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 16px;
+}
+
+.data-filename {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.data-purpose {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.views-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.view-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.view-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.key-pattern {
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  padding: 16px 20px;
+  margin: 16px 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.key-pattern p {
+  font-size: 14px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.key-pattern strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .endpoint-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  .flow-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .flow-arrow {
+    transform: rotate(90deg);
+    align-self: center;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Factory Inventory Management System</h1>
+    <p class="subtitle">Full-stack application with Vue 3 frontend, Python FastAPI backend, and in-memory mock data</p>
+  </header>
+
+  <section class="section">
+    <h2>Tech Stack</h2>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-label">Frontend</div>
+        <div class="tech-title">Vue 3 + Vite</div>
+        <div class="tech-desc">Modern reactive UI with Composition API</div>
+        <div class="tech-items">
+          <div class="tech-item">Vue Router for navigation</div>
+          <div class="tech-item">Axios for API calls</div>
+          <div class="tech-item">Custom SVG charts</div>
+          <div class="tech-item">Port 3000</div>
+        </div>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-label">Backend</div>
+        <div class="tech-title">Python FastAPI</div>
+        <div class="tech-desc">High-performance REST API with automatic docs</div>
+        <div class="tech-items">
+          <div class="tech-item">Pydantic validation</div>
+          <div class="tech-item">CORS middleware</div>
+          <div class="tech-item">Uvicorn server</div>
+          <div class="tech-item">Port 8001</div>
+        </div>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-label">Data Layer</div>
+        <div class="tech-title">JSON File Storage</div>
+        <div class="tech-desc">In-memory data loaded from JSON files</div>
+        <div class="tech-items">
+          <div class="tech-item">7 data files</div>
+          <div class="tech-item">Query-time filtering</div>
+          <div class="tech-item">No database required</div>
+          <div class="tech-item">Fast development</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Data Flow</h2>
+    <div class="flow-diagram">
+      <div class="flow-container">
+        <div class="flow-box">
+          <div class="flow-box-title">Vue Components</div>
+          <div class="flow-box-subtitle">User interactions & filters</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <div class="flow-box-title">API Client</div>
+          <div class="flow-box-subtitle">axios + query params</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <div class="flow-box-title">FastAPI</div>
+          <div class="flow-box-subtitle">In-memory filtering</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <div class="flow-box-title">JSON Data</div>
+          <div class="flow-box-subtitle">Pydantic validation</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <div class="flow-box-title">Computed Props</div>
+          <div class="flow-box-subtitle">Reactive display</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-pattern">
+      <p><strong>Filter System:</strong> Four global filters (Time Period, Warehouse, Category, Order Status) apply to all data via query parameters. Vue components manage filter state through composables, which trigger API calls that pass filters to FastAPI endpoints for server-side filtering.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Frontend Views</h2>
+    <div class="views-grid">
+      <div class="view-card">
+        <div class="view-icon">📊</div>
+        <div class="view-name">Dashboard</div>
+      </div>
+      <div class="view-card">
+        <div class="view-icon">📦</div>
+        <div class="view-name">Inventory</div>
+      </div>
+      <div class="view-card">
+        <div class="view-icon">📋</div>
+        <div class="view-name">Orders</div>
+      </div>
+      <div class="view-card">
+        <div class="view-icon">📈</div>
+        <div class="view-name">Demand</div>
+      </div>
+      <div class="view-card">
+        <div class="view-icon">💰</div>
+        <div class="view-name">Spending</div>
+      </div>
+      <div class="view-card">
+        <div class="view-icon">📄</div>
+        <div class="view-name">Reports</div>
+      </div>
+      <div class="view-card">
+        <div class="view-icon">⚠️</div>
+        <div class="view-name">Backlog</div>
+      </div>
+    </div>
+
+    <h3>Component Pattern</h3>
+    <p style="color: var(--text-secondary); font-size: 14px; margin-top: 12px;">
+      All views use Vue 3 Composition API with reactive state in refs, derived data in computed properties, and async data loading with try-catch error handling. Filter state is managed through shared composables for consistency across views.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>API Endpoints</h2>
+    <div class="endpoint-list">
+      <div class="endpoint-item">
+        <div class="endpoint-path">/api/inventory</div>
+        <div class="endpoint-details">
+          <div class="endpoint-desc">Get inventory items with optional filtering</div>
+          <div class="endpoint-filters">Filters: warehouse, category</div>
+        </div>
+      </div>
+      <div class="endpoint-item">
+        <div class="endpoint-path">/api/orders</div>
+        <div class="endpoint-details">
+          <div class="endpoint-desc">Get orders with comprehensive filtering support</div>
+          <div class="endpoint-filters">Filters: warehouse, category, status, month</div>
+        </div>
+      </div>
+      <div class="endpoint-item">
+        <div class="endpoint-path">/api/dashboard/summary</div>
+        <div class="endpoint-details">
+          <div class="endpoint-desc">Aggregate metrics for dashboard view</div>
+          <div class="endpoint-filters">Filters: all (warehouse, category, status, month)</div>
+        </div>
+      </div>
+      <div class="endpoint-item">
+        <div class="endpoint-path">/api/demand</div>
+        <div class="endpoint-details">
+          <div class="endpoint-desc">Demand forecasts and trends</div>
+          <div class="endpoint-filters">No filters</div>
+        </div>
+      </div>
+      <div class="endpoint-item">
+        <div class="endpoint-path">/api/backlog</div>
+        <div class="endpoint-details">
+          <div class="endpoint-desc">Delayed items and availability gaps</div>
+          <div class="endpoint-filters">No filters</div>
+        </div>
+      </div>
+      <div class="endpoint-item">
+        <div class="endpoint-path">/api/spending/*</div>
+        <div class="endpoint-details">
+          <div class="endpoint-desc">Summary, monthly breakdown, categories, and transactions</div>
+          <div class="endpoint-filters">Endpoints: /summary, /monthly, /categories, /transactions</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Data Files</h2>
+    <div class="data-grid">
+      <div class="data-file">
+        <div class="data-filename">inventory.json</div>
+        <div class="data-purpose">Stock levels, SKUs, locations, and reorder points</div>
+      </div>
+      <div class="data-file">
+        <div class="data-filename">orders.json</div>
+        <div class="data-purpose">Customer orders with status and delivery dates</div>
+      </div>
+      <div class="data-file">
+        <div class="data-filename">demand_forecasts.json</div>
+        <div class="data-purpose">Predicted future demand and trends</div>
+      </div>
+      <div class="data-file">
+        <div class="data-filename">backlog_items.json</div>
+        <div class="data-purpose">Delayed orders and availability gaps</div>
+      </div>
+      <div class="data-file">
+        <div class="data-filename">spending.json</div>
+        <div class="data-purpose">Budget summaries and category breakdowns</div>
+      </div>
+      <div class="data-file">
+        <div class="data-filename">transactions.json</div>
+        <div class="data-purpose">Individual purchase transactions</div>
+      </div>
+      <div class="data-file">
+        <div class="data-filename">purchase_orders.json</div>
+        <div class="data-purpose">Generated purchase orders for backlog items</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Key Patterns</h2>
+
+    <h3>Reactivity Pattern</h3>
+    <div class="key-pattern">
+      <p>Raw data stored in refs (<code>allOrders</code>, <code>inventoryItems</code>), derived data in computed properties. Changes to filters trigger new API calls, updating refs, which automatically cascade to computed properties and re-render the UI.</p>
+    </div>
+
+    <h3>Filter Application</h3>
+    <div class="key-pattern">
+      <p>Frontend passes filter values as query parameters → Backend applies filters sequentially → Returns filtered subset → Frontend stores in refs → Computed properties derive display values → Vue renders reactive UI.</p>
+    </div>
+
+    <h3>Data Validation</h3>
+    <div class="key-pattern">
+      <p>Pydantic models validate all API responses. If JSON data structure changes, corresponding Pydantic models must be updated. All dates use ISO 8601 format, and enums enforce valid status values.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Development Notes</h2>
+    <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px; color: var(--text-secondary);">
+      <p>• <strong>No Database:</strong> All data is loaded into memory at server startup. Changes don't persist across restarts.</p>
+      <p>• <strong>CORS Enabled:</strong> Backend allows all origins for development. Production deployments should restrict this.</p>
+      <p>• <strong>Auto-reload:</strong> Vite provides hot module replacement for frontend. Backend restarts manually.</p>
+      <p>• <strong>API Documentation:</strong> FastAPI generates interactive docs at <code style="font-family: var(--font-mono); background: var(--code-bg); padding: 2px 6px; border-radius: 2px;">http://localhost:8001/docs</code></p>
+      <p>• <strong>Revenue Goals:</strong> System tracks against $800K/month target, $9.6M annual goal.</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>
